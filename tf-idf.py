@@ -50,8 +50,8 @@ class MRTFIDF(MRJob):
 		term, doc = term_doc[0], term_doc[1]
 		yield term_doc[1], (term_doc[0], freq)
 
-    # compute the total number of terms in each doc
-    # => (term, doc), (tf, N)
+	# compute the total number of terms in each doc
+	# => (term, doc), (tf, N)
 	def number_of_terms_per_each_doc(self, doc, doc_term_freqs):
 		nwords = 0
 		terms = []
