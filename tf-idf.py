@@ -15,6 +15,7 @@ SYM_PATTERN = r"[!\"#$%&()*+-./:;<=>?@\[\\\]^_`{|}~\n]"
 
 stop_words = stopwords.words('english')
 
+NUMBER_OF_DOCUMENTS = 265
 
 class MRTFIDF(MRJob):
 	"""Method splitter gets raw line and yields sanitiezed words"""
@@ -89,7 +90,7 @@ class MRTFIDF(MRJob):
 
 	# => (term, doc), tfidf
 	def calculate_tf_idf(self, term_doc, tf_n_df):
-		tfidf = (tf_n_df[0] / tf_n_df[1]) * log(2 / tf_n_df[2])
+		tfidf = (tf_n_df[0] / tf_n_df[1]) * log(NUMBER_OF_DOCUMENTS / tf_n_df[2])
 		yield (term_doc[0], term_doc[1]), tfidf
 
 	def steps(self):
