@@ -9,6 +9,9 @@ from nltk.tokenize import word_tokenize
 
 from math import log
 
+import sys
+import os
+
 import re
 WORD_RE = re.compile(r"[\w']+")
 SYM_PATTERN = r"[!\"#$%&()*+-./:;<=>?@\[\\\]^_`{|}~\n]"
@@ -34,7 +37,8 @@ class MRTFIDF(MRJob):
 
 	# => ((term, doc), 1)
 	def get_words_from_line(self, _, line):
-		fname = jobconf_from_env('map.input.file') 
+		fname = jobconf_from_env('map.input.file')
+		# fname = os.environ['mapreduce_map_input_file']
 		for term in self.splitter(line):
 			yield (term, fname), 1
 
@@ -54,9 +58,9 @@ class MRTFIDF(MRJob):
 	# compute the total number of terms in each doc
 	# => (term, doc), (tf, N)
 	def number_of_terms_per_each_doc(self, doc, doc_term_freqs):
-		nwords = 0
 		terms = []
 		freqs = []
+		nwords = 0
 		for term_freq in doc_term_freqs:
 			term, freq = term_freq[0], term_freq[1]
 			terms.append(term)
@@ -72,21 +76,21 @@ class MRTFIDF(MRJob):
 		freq, nwords = freq_docWords[0], freq_docWords[1]
 		yield term, (doc, freq, nwords, 1)
 
-	# => (term, doc), (tf, N, df)
+	# => (term, doc), (tf, N, number_of_docs)
 	def term_appearence_in_corpus(self, term, doc_freq_nwords):
-		df = 0
+		number_of_docs = 0
 		docs = []
 		freqs = []
 		nswords = []
 
 		for dfn in doc_freq_nwords:
-			df += 1
+			number_of_docs += 1
 			docs.append(dfn[0])
 			freqs.append(dfn[1])
 			nswords.append(dfn[2])
 
 		for i in range(len(docs)):
-			yield (term, docs[i]), (freqs[i], nswords[i], df)
+			yield (term, docs[i]), (freqs[i], nswords[i], number_of_docs)
 
 	# => (term, doc), tfidf
 	def calculate_tf_idf(self, term_doc, tf_n_df):
@@ -97,6 +101,7 @@ class MRTFIDF(MRJob):
 		return [
 			MRStep(
 				mapper=self.get_words_from_line,
+				combiner=self.term_frequency_per_doc,
 				reducer=self.term_frequency_per_doc,
 			),
 			MRStep(
@@ -109,7 +114,7 @@ class MRTFIDF(MRJob):
 			),
 			MRStep(
 				mapper=self.calculate_tf_idf,
-			)
+			),
 		]
 
 if __name__ == '__main__':
