@@ -76,19 +76,17 @@ class MRTFIDF(MRJob):
 	# OUTPUT_PROTOCOL = RawValueProtocol
 	def finalize_search(self):
 		docs = {}
-		nterms = len(self.by_term)
 
 		for term in self.by_term:
 			for doc in self.by_term[term]:
 				if not doc[0] in docs:
-					docs[doc[0]] = [ doc[1], 0 ]
+					docs[doc[0]] = 0
 
-				docs[doc[0]][0] += doc[1]
-				docs[doc[0]][1] += 1
+				docs[doc[0]] += doc[1]
 
-		for doc in docs:
-			if docs[doc][1] == nterms:
-				yield doc, docs[doc][0]
+		ldocs = sorted([ (doc, docs[doc]) for doc in docs ], key=lambda item: -item[1])
+		for doc_score in ldocs:
+			yield doc_score[0], doc_score[1]
 
 	def steps(self):
 		return [
